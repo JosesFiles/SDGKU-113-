@@ -1,0 +1,197 @@
+
+New Django Project:
+
+    First Create Project folder:
+        mkdir *name of project*
+    
+        go into directory:
+            cd "name of project*
+
+    Create and activate new Virtual Environment:
+        python3 -m venv venv && source/bin/activate  #(Installs and activates venv in one line)
+
+    Install Django within the Virtual Environment:
+        pop3 install django
+
+    Start new Django project:
+        django-admin startproject config .
+
+    Immidiately migrage project files:
+        python3 manage.py migrate
+
+    test django install:
+        python3 manage.py runserver.
+            ctrl+click to test install, you should see the rocket launching:
+        
+    Close server    
+        ctrl+C
+
+    Create all apps you think you'll need:
+        python3 manage.py startapp pages....or posts....or accounts etc.
+
+    install apps ready to be installed.
+        open VSC using:
+            code .
+                open config.settings.py:
+                    go to INSTALLED_APPS:
+                        add apps you just created at bottom after all exiting apps..  (add full name when possible)
+                            example: 
+                                instead of just adding:
+                                    'pages'
+                                    try adding:
+                                        'pages.apps.blog' in order to not miss any features.
+
+    update any models inside any apps you've created:
+
+        python manage.py makemigrations cities
+        python manage.py migrate
+
+Once models and migrations are complete you can add Superuser :
+    
+        python3 manage.py createsuperuser
+            -follow prompts  
+
+            
+
+    go to folder for one of your appas and edit views.py:
+        replace code with :
+            from django.views.generic import TemplateView
+
+            class HomePageView(TemplateView):
+                template_name = "path/home.html"
+            
+            class AboutPageView(TemplateView):
+                template_name = "path/about.html"
+
+    To create those pages:
+        open config.settings.py 
+            look for TEMPLATES = [
+                inside the "DIRS" [], 
+                    insert the following:
+                        [str(BASE_DIR.joinpath('templates"))
+It is quicker to create these files in terminal:
+            mkdir -p templates/pages            #created templates and posts directories
+            touch templates/base.html           #created base.html at the root of templates
+
+            back in VSC 
+                new files:
+                    home.html
+                    about.html
+
+    Open templates.pages.html:
+        extend base.html    
+            {% extends 'base.html %}        
+
+        add blocks (title/content)
+            {% block title %}TITLE{% endblock title %}
+            {% block content %}
+                <h1>Home</h1>
+                    etc...html stuff
+            {% endblock content %}
+
+
+    Open base.html
+        use emmet !
+        add block title like above
+        add block content inside divs.
+        add navbar using cdn and script code
+        connect links to templates
+
+    go to config.urls.py
+        instructions are above
+            add include on django.urls import
+
+        urlpatterns = [
+            add
+                path("", include(pages.urls)),
+
+
+go to pages directory and create:
+    urls.py file:
+        from django.urls import path
+    from .views import HomePageView, AboutPageView
+
+    urlpatterns = [
+        path("", HomePageView.as_view(), name="home"),
+        path("about/", HomePageView.as_view(), name="about"),
+    ]
+
+    From TERMINAL:
+     
+        python3 manage.py migrate
+
+    Launch server to test:
+        python3 manage.py runserver 
+
+     open posts   
+        from django.db import models
+from django.urls import reverse
+class Post(models.Model):
+    add:
+            title = models.CharField(max_length=128)
+            subtitle = models.CharField(max_length=128)
+            author = models.ForeignKey(
+                'auth.User',
+                    #model responsible for handling underlying user table.
+                on_delete=models.CASCADE
+                    #if users are deleted so will all their posts.
+            )
+            body = models.TextField()
+            created_on = models.DateTimeField(auto_now_add=True)
+            active = models.BooleanField(default=True)
+
+            def __str__(self):     # The STRdunder method takes the memory object and returns a print statement.
+                return self.title
+
+            def get_absolute_url(self):
+                return reverse("detail", args=[self.id])
+Create Views for POST:
+        open posts.views.py
+            add:
+                    from django.views.generic import (
+                    DetailView,
+                    ListView,
+                     )
+                    from django.views.generic.edit import(
+                        CreateView,
+                        DeleteView,
+                        UpdateView,
+                    )
+
+
+                    from .models import Post
+                    from django.urls import reverse_lazy
+
+
+                    class PostListView(ListView):
+                        template_name = "posts/list.html"
+                        model = Post
+
+
+                    class PostDetailView(DetailView):
+                        template_name = "posts/detail.html"
+                        model = Post
+
+
+                    class PostCreateView(CreateView):
+                        template_name = "posts/new.html"
+                        model = Post
+                        fields = ["title", "subtitle", "author", "body", "active"]
+
+
+                    class PostUpdateView(UpdateView):
+                        model = Post
+                        template_name = "posts/edit.html"
+                        fields = ["title", "subtitle", "body", "active"]
+
+
+                        def form_valid(self, form):
+                            response = super().form_valid(form)
+                            # Perform additional actions here
+                            return response
+
+                    class PostDeleteView(DeleteView):
+                        template_name = "posts/delete.html"
+                        model = Post
+                        success_url = reverse_lazy("list")
+The migrate and superuser parts are in first part of that post I think.
